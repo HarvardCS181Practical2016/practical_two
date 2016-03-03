@@ -2,7 +2,8 @@
 # We count the number of specific system calls made by the programs, and use
 # these as our features.
 
-# This code requires that the unzipped training set is in a folder called "train". 
+# This code requires that the unzipped training set is in a folder called "train".
+from itertools import chain
 
 import os
 from collections import Counter
@@ -14,6 +15,7 @@ import numpy as np
 from scipy import sparse
 import pandas as pd
 import util
+import operator
 
 TRAIN_DIR = "train"
 TEST_DIR = "test"
@@ -23,12 +25,16 @@ call_set = set([])
 good_calls = ['sleep',
               'dump_line',
               'open_key',
+              'query_value',
               'load_dll',
               'remove_directory',
               'create_directory',
               'get_computer_name',
               'open_url',
-              'process']
+              'process',
+              'vm_protect',
+              'vm_allocate',
+              'create_mutex']
 
 
 def add_to_set(tree):
@@ -37,7 +43,7 @@ def add_to_set(tree):
         call_set.add(call)
 
 
-def create_data_matrix(start_index, end_index, direc="train"):
+def create_data_matrix(start_index, end_index, direc="train", dlls=None):
     X = None
     classes = []
     ids = [] 
@@ -51,6 +57,8 @@ def create_data_matrix(start_index, end_index, direc="train"):
             continue 
         if i >= end_index:
             break
+
+        print 'Processing file [{0}]: {1}'.format(i, datafile)
 
         # extract id and true class (if available) from filename
         id_str, clazz = datafile.split('.')[:2]
@@ -69,7 +77,7 @@ def create_data_matrix(start_index, end_index, direc="train"):
         # parse file as an xml document
         tree = ET.parse(os.path.join(direc,datafile))
         add_to_set(tree)
-        this_row = call_feats(tree)
+        this_row = call_feats(tree, dlls)
         if X is None:
             X = this_row 
         else:
@@ -77,15 +85,24 @@ def create_data_matrix(start_index, end_index, direc="train"):
 
     return X, np.array(classes), ids
 
-
-def call_feats(tree):
+def call_feats(tree, dlls):
     call_counter = {}
+    dll_counter = {}
     for el in tree.iter():
         call = el.tag
         if call not in call_counter:
             call_counter[call] = 0
         else:
             call_counter[call] += 1
+
+        if call == 'load_dll':
+            dll_name = el.get('filename')
+            if dll_name is not None:
+                dll_name = dll_name.encode('utf-8').strip()
+                if dll_name not in dll_counter:
+                    dll_counter[dll_name] = 1
+                else:
+                    dll_counter[dll_name] += 1
 
     call_feat_array = np.zeros(len(good_calls))
     for i in range(len(good_calls)):
@@ -94,25 +111,82 @@ def call_feats(tree):
         if call in call_counter:
             call_feat_array[i] = call_counter[call]
 
-    return call_feat_array
+    dll_name_array = np.zeros(len(dlls))
+    for i in range(len(dlls)):
+        dll_name_array[i] = 1 if dlls[i] in dll_counter else 0
+
+    return np.concatenate((call_feat_array, dll_name_array))
+
+def create_list_of_dlls(start_index, end_index, direc="train"):
+    dlls_loaded = set([])
+    i = -1
+    for datafile in os.listdir(direc):
+        if datafile == '.DS_Store':
+            continue
+
+        i += 1
+        if i < start_index:
+            continue
+        if i >= end_index:
+            break
+
+        # parse file as an xml document
+        tree = ET.parse(os.path.join(direc,datafile))
+        for el in tree.iter():
+            if el.tag == 'load_dll':
+                dlls_name = el.get('filename')
+                if dlls_name is not None:
+                    dlls_loaded.add(dlls_name.encode('utf-8').strip())
+
+    return list(dlls_loaded)
+
+
+def find_ngrams(input_list, n):
+    return zip(*[input_list[i:] for i in range(n)])
+
+
+def categorization_accuracy(predicted_file, actual_file):
+    predicted = pd.read_csv(predicted_file)
+    actual = pd.read_csv(actual_file)
+
+    n_predicted, col = predicted.values.shape
+    n_actual, col = actual.values.shape
+
+    if n_predicted != n_actual:
+        print 'Predicted and actual data does not match', n_predicted, n_actual
+        return
+
+    class_predicted = predicted.Prediction.values
+    class_actual = actual.clazz.values
+
+    correct = n_actual - np.count_nonzero(class_predicted - class_actual)
+
+    print float(correct) / float(n_actual)
+
 
 ## Feature extraction
 def main():
-    X_train, t_train, train_ids = create_data_matrix(0, 3086, TRAIN_DIR)
-    X_valid, t_valid, valid_ids = create_data_matrix(0, 3724, TEST_DIR)
+    # get list of dlls loaded in all files
+    dlls = create_list_of_dlls(0, 3086, TRAIN_DIR)
+    print 'Numbers of unique dlls loaded: ', len(dlls)
 
-    print np.vstack(t_train).shape
-    print X_train.shape
+    # feature columns
+    columns = good_calls + dlls
 
-    train_df = pd.DataFrame(X_train, columns = good_calls)
+    # create training dataframe and save as train.csv
+    X_train, t_train, train_ids = create_data_matrix(0, 3086, TRAIN_DIR, dlls)
+
+    train_df = pd.DataFrame(X_train, columns=columns)
     train_df['clazz'] = t_train
     train_df['Id'] = train_ids
-    train_df.to_csv('train.csv', index=False)
+    train_df.to_csv('train01.csv', index=False)
 
-    train_df = pd.DataFrame(X_valid, columns = good_calls)
+    # create test dataframe and save as test.csv
+    X_valid, t_valid, valid_ids = create_data_matrix(0, 3724, TEST_DIR, dlls)
+
+    train_df = pd.DataFrame(X_valid, columns=columns)
     train_df['Id'] = valid_ids
-    train_df.to_csv('test.csv', index=False)
-
+    train_df.to_csv('test01.csv', index=False)
 
     print 'Data matrix (training set):'
     print X_train
@@ -124,3 +198,18 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # categorization_accuracy('predicted_RF.csv', 'actual_small.csv')
+    # df_train = pd.read_csv('train01.csv')
+    # df1 = df_train[:1999]
+    # df2 = df_train[1999:3088]
+    # df2 = df2.drop(['clazz'], axis=1)
+    #
+    # df1.to_csv('train01_small.csv', index=False)
+    # df2.to_csv('test01_small.csv', index=False)
+    #
+    # print df2.size
+
+
+
+
+

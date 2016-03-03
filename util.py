@@ -16,3 +16,4 @@ def write_predictions(predictions, ids, outfile):
         f.write("Id,Prediction\n")
         for i, history_id in enumerate(ids):
             f.write("%s,%d\n" % (history_id, predictions[i]))
+

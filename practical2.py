@@ -11,8 +11,8 @@ from util import write_predictions
 from feature_extraction import categorization_accuracy
 
 # Read in train and test as Pandas DataFrames
-df_train = pd.read_csv("train01.csv")
-df_test = pd.read_csv("test01.csv")
+df_train = pd.read_csv("train.csv")
+df_test = pd.read_csv("test.csv")
 
 # format training data
 Y_train = df_train.clazz.values
@@ -35,7 +35,7 @@ print "Test features:", X_test.shape
 RF = RandomForestClassifier(n_estimators=100, max_features='log2')
 RF.fit(X_train, Y_train)
 RF_pred = RF.predict(X_test)
-write_predictions(RF_pred, test_ids, 'predicted_RF01.csv')
+write_predictions(RF_pred, test_ids, 'predicted_RF.csv')
 # print 'RandomForestClassifier', categorization_accuracy('predicted_RF01.csv', 'actual_small.csv')
 
 # 0.891444342226 - n_estimators=100, max_features='None'

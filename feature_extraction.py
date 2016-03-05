@@ -22,28 +22,13 @@ TEST_DIR = "test"
 
 call_set = set([])
 
-good_calls = ['sleep',
-              'dump_line',
-              'open_key',
-              'query_value',
-              'load_dll',
-              'remove_directory',
-              'create_directory',
-              'get_computer_name',
-              'open_url',
-              'process',
-              'vm_protect',
-              'vm_allocate',
-              'create_mutex']
-
-
 def add_to_set(tree):
     for el in tree.iter():
         call = el.tag
         call_set.add(call)
 
 
-def create_data_matrix(start_index, end_index, direc="train", dlls=None):
+def create_data_matrix(start_index, end_index, dlls, good_calls, direc="train",):
     X = None
     classes = []
     ids = [] 
@@ -77,7 +62,7 @@ def create_data_matrix(start_index, end_index, direc="train", dlls=None):
         # parse file as an xml document
         tree = ET.parse(os.path.join(direc,datafile))
         add_to_set(tree)
-        this_row = call_feats(tree, dlls)
+        this_row = call_feats(tree, dlls, good_calls)
         if X is None:
             X = this_row 
         else:
@@ -85,7 +70,7 @@ def create_data_matrix(start_index, end_index, direc="train", dlls=None):
 
     return X, np.array(classes), ids
 
-def call_feats(tree, dlls):
+def call_feats(tree, dlls, good_calls):
     call_counter = {}
     dll_counter = {}
     for el in tree.iter():
@@ -119,6 +104,7 @@ def call_feats(tree, dlls):
 
 def create_list_of_dlls(start_index, end_index, direc="train"):
     dlls_loaded = set([])
+    calls = set([])
     i = -1
     for datafile in os.listdir(direc):
         if datafile == '.DS_Store':
@@ -133,12 +119,13 @@ def create_list_of_dlls(start_index, end_index, direc="train"):
         # parse file as an xml document
         tree = ET.parse(os.path.join(direc,datafile))
         for el in tree.iter():
+            calls.add(el.tag)
             if el.tag == 'load_dll':
                 dlls_name = el.get('filename')
                 if dlls_name is not None:
                     dlls_loaded.add(dlls_name.encode('utf-8').strip())
 
-    return list(dlls_loaded)
+    return list(dlls_loaded), list(calls)
 
 
 def find_ngrams(input_list, n):
@@ -161,32 +148,34 @@ def categorization_accuracy(predicted_file, actual_file):
 
     correct = n_actual - np.count_nonzero(class_predicted - class_actual)
 
-    print float(correct) / float(n_actual)
+    return float(correct) / float(n_actual)
 
 
 ## Feature extraction
 def main():
     # get list of dlls loaded in all files
-    dlls = create_list_of_dlls(0, 3086, TRAIN_DIR)
-    print 'Numbers of unique dlls loaded: ', len(dlls)
+    dlls, calls = create_list_of_dlls(0, 3086, TRAIN_DIR)
+    print 'Numbers of unique dlls loaded: ', len(dlls), len(calls)
+
+    good_calls = calls
 
     # feature columns
     columns = good_calls + dlls
 
     # create training dataframe and save as train.csv
-    X_train, t_train, train_ids = create_data_matrix(0, 3086, TRAIN_DIR, dlls)
+    X_train, t_train, train_ids = create_data_matrix(0, 3086, dlls, calls, TRAIN_DIR)
 
     train_df = pd.DataFrame(X_train, columns=columns)
     train_df['clazz'] = t_train
     train_df['Id'] = train_ids
-    train_df.to_csv('train01.csv', index=False)
+    train_df.to_csv('train.csv', index=False)
 
     # create test dataframe and save as test.csv
-    X_valid, t_valid, valid_ids = create_data_matrix(0, 3724, TEST_DIR, dlls)
+    X_valid, t_valid, valid_ids = create_data_matrix(0, 3724, dlls, calls, TEST_DIR)
 
     train_df = pd.DataFrame(X_valid, columns=columns)
     train_df['Id'] = valid_ids
-    train_df.to_csv('test01.csv', index=False)
+    train_df.to_csv('test.csv', index=False)
 
     print 'Data matrix (training set):'
     print X_train
@@ -196,20 +185,25 @@ def main():
 
     # From here, you can train models (eg by importing sklearn and inputting X_train, t_train).
 
+
+def split_training_dataset(filename):
+    df_train = pd.read_csv(filename)
+    df1 = df_train[:1999]
+    df2 = df_train[2000:3086]
+    df3 = pd.DataFrame()
+
+    df3['Id'] = df2['Id']
+    df3['clazz'] = df2['clazz']
+
+    df2 = df2.drop(['clazz'], axis=1)
+
+    df1.to_csv('train_small.csv', index=False)
+    df2.to_csv('test_small.csv', index=False)
+    df3.to_csv('actual.csv', index=False)
+
+
 if __name__ == "__main__":
     main()
-    # categorization_accuracy('predicted_RF.csv', 'actual_small.csv')
-    # df_train = pd.read_csv('train01.csv')
-    # df1 = df_train[:1999]
-    # df2 = df_train[1999:3088]
-    # df2 = df2.drop(['clazz'], axis=1)
-    #
-    # df1.to_csv('train01_small.csv', index=False)
-    # df2.to_csv('test01_small.csv', index=False)
-    #
-    # print df2.size
-
-
-
-
+    # categorization_accuracy('predicted_RF01.csv', 'actual_small.csv')
+    # split_training_dataset('train.csv')
 

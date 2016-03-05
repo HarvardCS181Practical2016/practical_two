@@ -15,14 +15,50 @@ Identifying and eliminating malicious software (malware) is a modern computing t
 \end{abstract}
 
 \section{Technical Approach}
-The training data set for our examination consisted of 3086 XML executable files. Of these, roughly half contained malware. The XML files on first glance appear quite daunting, with large hexadecimal strings and semi-random calls to various processes intermingled throughout the scripts.
-
-
+The training data set for our examination consisted of 3086 XML executable files. Of these, roughly half contained malware. The XML files on first glance appear quite daunting, with large hexadecimal strings and semi-random calls to various processes intermingled throughout the scripts. Another foundational problem with the data analysis is the nature of the differences between the malware classes. The differences between certain classes are subtle, adding another layer of complexity to the classification process.\\\\
+After initial testing of various generative and probabilistic classifiers, it was obvious that proper feature selection would be the primary manner in which we could improve the model. From the XML files, we attempted to extract certain calls in the executable that could be used by malicious software to attack a computer system. These calls were as follows:\\\\
+'sleep', 'dump\_line', 'open\_key', 'query\_value', 'load\_dll', 'remove\_directory', 'create\_directory', 'get\_computer\_name', 'open\_url', 'process', 'vm\_protect', 'vm\_allocate', 'create\_mutex'\\\\
+Intuitively, these were seen as calls that could manipulate a computer and this were able to be used as accurate classifiers for identifying malware. Utilization of dynamic-link libraries (DLLs) were also seen as a potentially valuable indicator in our classification, and accordingly we added features pertaining to DLL usage. Towards the end of our analysis, we added in code to parse and count the total number of XML tags that occurred in each executable. 
+We attempted to use a wide range of classification paradigms in our analysis. The following techniques were used at various points in our study:\\\\
+Random Forest Classifier, Quadratic Discriminant Analysis, AdaBoost Classifier,  Gaussian Naive Bayes, Decision Tree Classifier, Support Vector Machine, K-Nearest Neighbor Classifier
 \section{Results}
-
-
+Ultimately, our random forest classifier was the most accurate. 
+\begin{table}[ht]
+\centering 
+\begin{tabular}{c c } 
+\hline 
+Method & Accuracy\\ [0.5ex] 
+\hline 
+Random Forest Classifier & 0.890524379025 \\ 
+Quadratic Discriminant Analysis & 0.699172033119\\
+AdaBoost Classifier & 0.634774609016\\
+Gaussian Naive Bayes & 0.671573137075\\
+Decision Tree Classifier & 0.866605335787\\
+Support Vector Machine & 0.625574977001\\
+K-Nearest Neighbor Classifier & 0.824287028519\\ [1ex] 
+\hline 
+\end{tabular}
+\label{table:nonlin} 
+\end{table}
+Once we realized Random Forest Classification was the most accurate, we attempted to tweak the parameters to improve the accuracy of the model. 
+\begin{table}[ht]
+\centering 
+\begin{tabular}{c c } 
+\hline 
+Parameters & Accuracy\\ [0.5ex] 
+\hline 
+n\_estimators=100, max\_features='None' & 0.891444342226\\ 
+n\_estimators=50, max\_features='log2' & 0.894204231831\\
+n\_estimators=100, max\_features='log2' & 0.897884084637\\
+n\_estimators=125, max\_features='log2' & 0.896964121435\\
+n\_estimators=115, max\_features='log2' & 0.896044158234\\ [1ex] 
+\hline 
+\end{tabular}
+\label{table:nonlin} 
+\end{table}
 
 \section{Discussion}
+Another approach that we were unable to draft due to time constraints was one that analyzed the number of distinct n-grams in the executable files.\\\\
 All code for this project can be found at: $$https://github.com/HarvardCS181Practical2016$$.
 
 

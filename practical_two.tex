@@ -15,14 +15,14 @@ Identifying and eliminating malicious software (malware) is a modern computing t
 \end{abstract}
 
 \section{Technical Approach}
-The training data set for our examination consisted of 3086 XML executable files. Of these, roughly half contained malware. The XML files on first glance appear quite daunting, with large hexadecimal strings and semi-random calls to various processes intermingled throughout the scripts. Another foundational problem with the data analysis is the nature of the differences between the malware classes. The differences between certain classes are subtle, adding another layer of complexity to the classification process.\\\\
+The training data set for our examination consisted of 3086 XML executable files. Of these, roughly half contained malware. The XML files on first glance appear quite daunting, with large hexadecimal strings and quasi-random calls to various processes intermingled throughout the scripts. Another foundational problem with the data analysis is the nature of the differences between the malware classes. The differences between certain classes are subtle, adding another layer of complexity to the classification process.\\\\
 After initial testing of various generative and probabilistic classifiers, it was obvious that proper feature selection would be the primary manner in which we could improve the model. From the XML files, we attempted to extract certain calls in the executable that could be used by malicious software to attack a computer system. These calls were as follows:\\\\
 'sleep', 'dump\_line', 'open\_key', 'query\_value', 'load\_dll', 'remove\_directory', 'create\_directory', 'get\_computer\_name', 'open\_url', 'process', 'vm\_protect', 'vm\_allocate', 'create\_mutex'\\\\
 Intuitively, these were seen as calls that could manipulate a computer and this were able to be used as accurate classifiers for identifying malware. Utilization of dynamic-link libraries (DLLs) were also seen as a potentially valuable indicator in our classification, and accordingly we added features pertaining to DLL usage. Towards the end of our analysis, we added in code to parse and count the total number of XML tags that occurred in each executable. 
 We attempted to use a wide range of classification paradigms in our analysis. The following techniques were used at various points in our study:\\\\
 Random Forest Classifier, Quadratic Discriminant Analysis, AdaBoost Classifier,  Gaussian Naive Bayes, Decision Tree Classifier, Support Vector Machine, K-Nearest Neighbor Classifier
 \section{Results}
-Ultimately, our random forest classifier was the most accurate. 
+Ultimately, our random forest classifier was the most accurate.  This classifier had an accuracy of .81211 on the test data set on Kaggle. Accuracies of the various models on our own partitioned out test set are below. 
 \begin{table}[ht]
 \centering 
 \begin{tabular}{c c } 
@@ -39,8 +39,8 @@ K-Nearest Neighbor Classifier & 0.824287028519\\ [1ex]
 \hline 
 \end{tabular}
 \label{table:nonlin} 
-\end{table}
-Once we realized Random Forest Classification was the most accurate, we attempted to tweak the parameters to improve the accuracy of the model. 
+\end{table}\\
+The semi-structured nature of the data appears to have led to the success of the Random Forest approach. Random Forest algorithms in general tend to do well with larger datasets with large numbers of features. Once we realized Random Forest Classification was the most accurate model, we attempted to tweak the parameters to improve the accuracy of the model. 
 \begin{table}[ht]
 \centering 
 \begin{tabular}{c c } 

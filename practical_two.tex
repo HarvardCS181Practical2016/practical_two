@@ -3,7 +3,7 @@
 
 \begin{document}
 
-\title{CS181 Spring 2016 Practical 2 | Team EXT3}
+\title{CS181 Spring 2016 Practical 2: Classifying Malicious Software | Team EXT3}
 \author{Robert J. Johnson | Dinesh Malav | Matthew McKenna}
 
 
@@ -11,10 +11,12 @@
 \maketitle
 
 \begin{abstract}
- 
+Identifying and eliminating malicious software (malware) is a modern computing task of considerable importance. Properly classifying these programs in a computationally efficient manner will lead to massive savings in time and money. Our study showed how various machine learning classifiers performed at this task when presented with malicious XML executables. A random forest classifier was shown to be the best model tested, with a categorization accuracy of .81211 on the test data. 
 \end{abstract}
 
 \section{Technical Approach}
+The training data set for our examination consisted of 3086 XML executable files. Of these, roughly half contained malware. The XML files on first glance appear quite daunting, with large hexadecimal strings and semi-random calls to various processes intermingled throughout the scripts.
+
 
 \section{Results}
 

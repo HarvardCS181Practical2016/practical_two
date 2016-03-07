@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage{graphicx}
+\usepackage{float}
 
 \begin{document}
 
@@ -22,7 +23,13 @@ Intuitively, these were seen as calls that could manipulate a computer and this 
 We attempted to use a wide range of classification paradigms in our analysis. The following techniques were used at various points in our study:\\\\
 Random Forest Classifier, Quadratic Discriminant Analysis, AdaBoost Classifier,  Gaussian Naive Bayes, Decision Tree Classifier, Support Vector Machine, K-Nearest Neighbor Classifier
 \section{Results}
-Ultimately, our random forest classifier was the most accurate.  This classifier had an accuracy of .81211 on the test data set on Kaggle. Accuracies of the various models on our own partitioned out test set are below. 
+Ultimately, our random forest classifier was the most accurate.  This classifier had an accuracy of .81211 on the test data set on Kaggle. Accuracies of the various models on our own partitioned out test set are below. The full results are charted on the next  page. 
+\begin{figure}[h]
+\centering
+\includegraphics[width=1.0\textwidth]{classifier_selection.png}
+\caption{Classifier Model vs Accuracy}
+\label{classifier_selection}
+\end{figure}\\
 \begin{table}[ht]
 \centering 
 \begin{tabular}{c c } 
@@ -45,7 +52,7 @@ The semi-structured nature of the data appears to have led to the success of the
 \centering 
 \begin{tabular}{c c } 
 \hline 
-Parameters & Accuracy\\ [0.5ex] 
+Parameters for Random Forest & Accuracy\\ [0.5ex] 
 \hline 
 n\_estimators=100, max\_features='None' & 0.891444342226\\ 
 n\_estimators=50, max\_features='log2' & 0.894204231831\\
@@ -60,7 +67,7 @@ n\_estimators=115, max\_features='log2' & 0.896044158234\\ [1ex]
 \section{Discussion}
 We found that good feature engineering was again crucial to making accurate predictions, and different classification techniques resulted in significant differences in accuracy. One interesting result was that Random Forest, Decision Tree Classifier, and K-Nearest Neighbor Classifier methods significantly out-performed the other methods tested. The accuracy for these models was in the 82\% - 89\% range, while the other methods were in the 60\%-69\% range.  These three methods are weighted-neighborhood schemes, so it seems this approach was most appropriate for the given data. One reason the Random Forest performed better than other weighted-neighborhood schemes could be because it controls for over-fitting to the training data set, at least compared to the Decision Tree Classifier)\\\\
 As we saw in the last practical, different model classes gave fairly different results, but once we found the best model type, fine-tuning the model parameters gave only a slight improvement. Tuning the n\_estimators and max\_features parameters improved the Random Forest accuracy, but only by about 0.1\%. The highest percent accuracy (89.79\%) was achieved with n\_estimators set to 100 and max\_features set to 'log2'.\\\\
-Future work could include graphing the percent accuracy as a function of model parameters to find the values that give the highest percent accuracy in the data. Other future work could involve exploring additional Random Forest Classification parameters. Some initial work showed that turning off the 'bootstrap' parameter (i.e. using the entire dataset instead of bootstrapped datasets) slightly improved model accuracy. Also, having a domain expert would be helpful to see which properties of the XML executable files are known to be predictive of malware class. Because most malware class had very low frequencies in the training data (11 of the 15 malware classes had a frequency of less than 2\% in the training data), having a larger dataset would allow us to model these malware classes more accurately, and therefore predict malware class more accurately. Another approach that we were unable to draft due to time constraints was one that analyzed the number of distinct n-grams in the executable files. This method idea is based off of a similar approach taken by Ziko Kolter, a professor at Carnegie Mellon, and Marcus Maloof, a professor at Georgetown.\footnote{http://www.jmlr.org/papers/volume7/kolter06a/kolter06a.pdf} Their study compiled over 255 million distinct n-grams and used the data to classify malware with a true positive rate of approximately 98\%. This appears to be an incredibly useful technique in the detection of malware. \\\\
+Future work could include graphing the percent accuracy as a function of model parameters to find the values that give the highest percent accuracy in the data. Other future work could involve exploring additional Random Forest Classification parameters. Some initial work showed that turning off the 'bootstrap' parameter (i.e. using the entire dataset instead of bootstrapped datasets) slightly improved model accuracy. Also, having a domain expert would be helpful to see which properties of the XML executable files are known to be predictive of malware class. Because most malware class had very low frequencies in the training data (11 of the 15 malware classes had a frequency of less than 2\% in the training data), having a larger dataset would allow us to model these malware classes more accurately, and therefore predict malware class more accurately. Another approach that we were unable to draft due to time constraints was one that analyzed the number of distinct n-grams in the executable files. This method idea is based off of a similar approach taken by J. Ziko Kolter, a professor at Carnegie Mellon, and Marcus Maloof, a professor at Georgetown.\footnote{http://www.jmlr.org/papers/volume7/kolter06a/kolter06a.pdf} Their study compiled over 255 million distinct n-grams and used the data to classify malware with a true positive rate of approximately 98\%. This appears to be an incredibly useful technique in the detection of malware. \\\\
 All code for this project can be found at: $$https://github.com/HarvardCS181Practical2016$$.
 
 
